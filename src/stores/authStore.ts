@@ -30,21 +30,26 @@ export const useAuthStore = create<AuthState>()((set: any) => {
         
         // Verificar se estamos em ambiente de produção e se é um email de teste
         const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-        const isTestUser = email.includes('teste@') || email.includes('admin@') || email.includes('demo@');
+        const isTestUser = email.includes('teste@') || 
+                          email.includes('admin@') || 
+                          email.includes('demo@') || 
+                          email.includes('user@') || 
+                          email === 'admin@dentclinic' || 
+                          email === 'user@dentclinic';
         
         // Criar usuário de desenvolvimento automaticamente se for teste em produção
-        if (isProd && isTestUser) {
+        if ((isProd && isTestUser) || email === 'admin@dentclinic' || email === 'user@dentclinic') {
           console.log('Tentativa de login com usuário de teste em produção. Verificando se já existe no localStorage...');
           
           // Verificar se já existe
           let devUserStr = localStorage.getItem('dentclinic-user');
           
-          if (!devUserStr) {
+          if (!devUserStr || JSON.parse(devUserStr).email !== email) {
             // Criar usuário de desenvolvimento para ambiente de produção
             const devUser = {
               id: 'dev-user-id-' + Date.now(),
               email: email,
-              role: email.includes('admin@') ? 'admin' : 'user'
+              role: email.includes('admin@') || email === 'admin@dentclinic' ? 'admin' : 'user'
             };
             localStorage.setItem('dentclinic-user', JSON.stringify(devUser));
             devUserStr = JSON.stringify(devUser);
@@ -187,21 +192,26 @@ export const useAuthStore = create<AuthState>()((set: any) => {
         
         // Verificar se estamos em ambiente de produção e se é um email de teste
         const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-        const isTestUser = localStorage.getItem('dentclinic-user')?.includes('teste@') || localStorage.getItem('dentclinic-user')?.includes('admin@') || localStorage.getItem('dentclinic-user')?.includes('demo@');
+        const isTestUser = localStorage.getItem('dentclinic-user')?.includes('teste@') || 
+                          localStorage.getItem('dentclinic-user')?.includes('admin@') || 
+                          localStorage.getItem('dentclinic-user')?.includes('demo@') || 
+                          localStorage.getItem('dentclinic-user')?.includes('user@') || 
+                          localStorage.getItem('dentclinic-user') === 'admin@dentclinic' || 
+                          localStorage.getItem('dentclinic-user') === 'user@dentclinic';
         
         // Criar usuário de desenvolvimento automaticamente se for teste em produção
-        if (isProd && isTestUser) {
+        if ((isProd && isTestUser) || localStorage.getItem('dentclinic-user') === 'admin@dentclinic' || localStorage.getItem('dentclinic-user') === 'user@dentclinic') {
           console.log('Tentativa de verificar autenticação com usuário de teste em produção. Verificando se já existe no localStorage...');
           
           // Verificar se já existe
           let devUserStr = localStorage.getItem('dentclinic-user');
           
-          if (!devUserStr) {
+          if (!devUserStr || JSON.parse(devUserStr).email !== localStorage.getItem('dentclinic-user')) {
             // Criar usuário de desenvolvimento para ambiente de produção
             const devUser = {
               id: 'dev-user-id-' + Date.now(),
-              email: JSON.parse(localStorage.getItem('dentclinic-user')!).email,
-              role: JSON.parse(localStorage.getItem('dentclinic-user')!).role
+              email: localStorage.getItem('dentclinic-user')!,
+              role: localStorage.getItem('dentclinic-user')!.includes('admin@') || localStorage.getItem('dentclinic-user') === 'admin@dentclinic' ? 'admin' : 'user'
             };
             localStorage.setItem('dentclinic-user', JSON.stringify(devUser));
             devUserStr = JSON.stringify(devUser);
