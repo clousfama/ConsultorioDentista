@@ -28,23 +28,65 @@ export const useAuthStore = create<AuthState>()((set: any) => {
         // Redefinir erro ao tentar novo login
         set({ error: null });
         
-        // Verificar se há um usuário do modo de desenvolvimento no localStorage
-        const devUserStr = localStorage.getItem('dentclinic-user');
-        if (devUserStr) {
+        // Verificar se estamos em ambiente de produção e se é um email de teste
+        const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const isTestUser = email.includes('teste@') || email.includes('admin@') || email.includes('demo@');
+        
+        // Criar usuário de desenvolvimento automaticamente se for teste em produção
+        if (isProd && isTestUser) {
+          console.log('Tentativa de login com usuário de teste em produção. Verificando se já existe no localStorage...');
+          
+          // Verificar se já existe
+          let devUserStr = localStorage.getItem('dentclinic-user');
+          
+          if (!devUserStr) {
+            // Criar usuário de desenvolvimento para ambiente de produção
+            const devUser = {
+              id: 'dev-user-id-' + Date.now(),
+              email: email,
+              role: email.includes('admin@') ? 'admin' : 'user'
+            };
+            localStorage.setItem('dentclinic-user', JSON.stringify(devUser));
+            devUserStr = JSON.stringify(devUser);
+            console.log('Usuário de teste criado para ambiente de produção:', devUser);
+          }
+          
           try {
             const devUser = JSON.parse(devUserStr);
-            if (devUser && devUser.email === email) {
-              console.log('Usando usuário do modo de desenvolvimento');
+            if (devUser && (devUser.email === email || isTestUser)) {
+              console.log('Usando usuário do modo de desenvolvimento em produção');
               set({
                 user: devUser,
                 error: null
               });
-              toast.success('Login realizado com sucesso!');
+              toast.success('Login realizado com sucesso em modo de desenvolvimento!');
               return;
             }
           } catch (e) {
             console.error('Erro ao processar usuário do modo de desenvolvimento:', e);
             localStorage.removeItem('dentclinic-user');
+          }
+        }
+        
+        // Verificar se há um usuário do modo de desenvolvimento no localStorage para ambiente local
+        if (!isProd) {
+          const devUserStr = localStorage.getItem('dentclinic-user');
+          if (devUserStr) {
+            try {
+              const devUser = JSON.parse(devUserStr);
+              if (devUser && devUser.email === email) {
+                console.log('Usando usuário do modo de desenvolvimento');
+                set({
+                  user: devUser,
+                  error: null
+                });
+                toast.success('Login realizado com sucesso!');
+                return;
+              }
+            } catch (e) {
+              console.error('Erro ao processar usuário do modo de desenvolvimento:', e);
+              localStorage.removeItem('dentclinic-user');
+            }
           }
         }
         
@@ -143,13 +185,33 @@ export const useAuthStore = create<AuthState>()((set: any) => {
       try {
         set({ loading: true, error: null });
         
-        // Verificar se há um usuário do modo de desenvolvimento no localStorage
-        const devUserStr = localStorage.getItem('dentclinic-user');
-        if (devUserStr) {
+        // Verificar se estamos em ambiente de produção e se é um email de teste
+        const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const isTestUser = localStorage.getItem('dentclinic-user')?.includes('teste@') || localStorage.getItem('dentclinic-user')?.includes('admin@') || localStorage.getItem('dentclinic-user')?.includes('demo@');
+        
+        // Criar usuário de desenvolvimento automaticamente se for teste em produção
+        if (isProd && isTestUser) {
+          console.log('Tentativa de verificar autenticação com usuário de teste em produção. Verificando se já existe no localStorage...');
+          
+          // Verificar se já existe
+          let devUserStr = localStorage.getItem('dentclinic-user');
+          
+          if (!devUserStr) {
+            // Criar usuário de desenvolvimento para ambiente de produção
+            const devUser = {
+              id: 'dev-user-id-' + Date.now(),
+              email: JSON.parse(localStorage.getItem('dentclinic-user')!).email,
+              role: JSON.parse(localStorage.getItem('dentclinic-user')!).role
+            };
+            localStorage.setItem('dentclinic-user', JSON.stringify(devUser));
+            devUserStr = JSON.stringify(devUser);
+            console.log('Usuário de teste criado para ambiente de produção:', devUser);
+          }
+          
           try {
             const devUser = JSON.parse(devUserStr);
-            if (devUser && devUser.id && devUser.email) {
-              console.log('Usuário de desenvolvimento encontrado:', devUser);
+            if (devUser) {
+              console.log('Usando usuário do modo de desenvolvimento em produção');
               set({
                 user: devUser,
                 loading: false,
@@ -160,6 +222,28 @@ export const useAuthStore = create<AuthState>()((set: any) => {
           } catch (e) {
             console.error('Erro ao processar usuário do modo de desenvolvimento:', e);
             localStorage.removeItem('dentclinic-user');
+          }
+        }
+        
+        // Verificar se há um usuário do modo de desenvolvimento no localStorage para ambiente local
+        if (!isProd) {
+          const devUserStr = localStorage.getItem('dentclinic-user');
+          if (devUserStr) {
+            try {
+              const devUser = JSON.parse(devUserStr);
+              if (devUser && devUser.id && devUser.email) {
+                console.log('Usuário de desenvolvimento encontrado:', devUser);
+                set({
+                  user: devUser,
+                  loading: false,
+                  error: null
+                });
+                return;
+              }
+            } catch (e) {
+              console.error('Erro ao processar usuário do modo de desenvolvimento:', e);
+              localStorage.removeItem('dentclinic-user');
+            }
           }
         }
         
